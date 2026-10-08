@@ -177,7 +177,7 @@ function initWidget(dir) {
                 Configuration.TEXT_COLOR.set(DEFAULT_SETTINGS.textColor);
                 Configuration.IS_SWAP_USAGE_ENABLE.set(DEFAULT_SETTINGS.isSwapUsageEnable);
                 Configuration.SWAP_USAGE_TEXT.set(DEFAULT_SETTINGS.swapUsageText);
-                Configuration.SHOW_FULL_UNIT_OF_NET_SPEED.set(
+                Configuration.SHOW_FULL_NET_SPEED_UNIT.set(
                     DEFAULT_SETTINGS.showFullNetSpeedUnit,
                 );
             }

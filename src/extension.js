@@ -30,13 +30,12 @@ import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 
-// Attention: This module is not available as an ECMAScript Module
-const ByteArray = imports.byteArray;
-
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Settings from './settings.js';
 
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+
+const textDecoder = new TextDecoder('utf-8');
 
 const netSpeedUnits = ['B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
 
@@ -53,7 +52,7 @@ const getCurrentNetSpeed = (refreshInterval) => {
     try {
         const inputFile = Gio.File.new_for_path('/proc/net/dev');
         const [, content] = inputFile.load_contents(null);
-        const contentStr = ByteArray.toString(content);
+        const contentStr = textDecoder.decode(content);
         const contentLines = contentStr.split('\n');
 
         // Caculate the sum of all interfaces' traffic line by line.
@@ -104,7 +103,7 @@ const getCurrentNetSpeed = (refreshInterval) => {
         lastTotalNetDownBytes = totalDownBytes;
         lastTotalNetUpBytes = totalUpBytes;
     } catch (e) {
-        logError(e);
+        console.error(e);
     }
 
     return netSpeed;
@@ -117,7 +116,7 @@ const getCurrentCPUUsage = () => {
     try {
         const inputFile = Gio.File.new_for_path('/proc/stat');
         const [, content] = inputFile.load_contents(null);
-        const contentStr = ByteArray.toString(content);
+        const contentStr = textDecoder.decode(content);
         const contentLines = contentStr.split('\n');
 
         let currentCPUUsed = 0;
@@ -149,7 +148,7 @@ const getCurrentCPUUsage = () => {
         lastCPUTotal = currentCPUTotal;
         lastCPUUsed = currentCPUUsed;
     } catch (e) {
-        logError(e);
+        console.error(e);
     }
     return currentCPUUsage;
 };
@@ -160,7 +159,7 @@ const getCurrentSwapUsage = () => {
     try {
         const inputFile = Gio.File.new_for_path('/proc/meminfo');
         const [, content] = inputFile.load_contents(null);
-        const contentStr = ByteArray.toString(content);
+        const contentStr = textDecoder.decode(content);
         const contentLines = contentStr.split('\n');
 
         let swapTotal = -1;
@@ -193,7 +192,7 @@ const getCurrentSwapUsage = () => {
             currentSwapUsage = 1 - swapFree / swapTotal;
         }
     } catch (e) {
-        logError(e);
+        console.error(e);
     }
 
     return currentSwapUsage;
@@ -205,7 +204,7 @@ const getCurrentMemoryUsage = () => {
     try {
         const inputFile = Gio.File.new_for_path('/proc/meminfo');
         const [, content] = inputFile.load_contents(null);
-        const contentStr = ByteArray.toString(content);
+        const contentStr = textDecoder.decode(content);
         const contentLines = contentStr.split('\n');
 
         let memTotal = -1;
@@ -239,7 +238,7 @@ const getCurrentMemoryUsage = () => {
             currentMemoryUsage = memUsed / memTotal;
         }
     } catch (e) {
-        logError(e);
+        console.error(e);
     }
     return currentMemoryUsage;
 };
@@ -331,13 +330,10 @@ const toDisplayString = (
 
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
-        constructor() {
-            super();
-            this.extension = Extension.lookupByUUID('ssm-gnome@lgiki.net');
-        }
-
-        _init() {
+        _init(extension) {
             super._init(0.0, 'Simple System Monitor');
+
+            this.extension = extension;
 
             this._label = new St.Label({
                 y_align: Clutter.ActorAlign.CENTER,
@@ -413,7 +409,7 @@ export default class SSMExtension extends Extension {
 
         this._showFullNetSpeedUnit = this._prefs.SHOW_FULL_NET_SPEED_UNIT.get();
 
-        this._indicator = new Indicator();
+        this._indicator = new Indicator(this);
 
         this._update_text_style();
 
